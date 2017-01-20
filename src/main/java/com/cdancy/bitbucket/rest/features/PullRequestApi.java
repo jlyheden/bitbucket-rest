@@ -29,28 +29,32 @@ import javax.ws.rs.QueryParam;
 
 import javax.ws.rs.core.MediaType;
 
-import com.cdancy.bitbucket.rest.domain.pullrequest.MergeStatus;
-import com.cdancy.bitbucket.rest.domain.pullrequest.ChangePage;
-import com.cdancy.bitbucket.rest.domain.pullrequest.CommitPage;
+import com.cdancy.bitbucket.rest.domain.pullrequest.*;
 import com.cdancy.bitbucket.rest.options.CreatePullRequest;
 import org.jclouds.javax.annotation.Nullable;
 import org.jclouds.rest.annotations.BinderParam;
 import org.jclouds.rest.annotations.Fallback;
-import org.jclouds.rest.annotations.Payload;
-import org.jclouds.rest.annotations.PayloadParam;
 import org.jclouds.rest.annotations.RequestFilters;
 
-import com.cdancy.bitbucket.rest.domain.pullrequest.PullRequest;
 import com.cdancy.bitbucket.rest.fallbacks.BitbucketFallbacks.PullRequestOnError;
 import com.cdancy.bitbucket.rest.fallbacks.BitbucketFallbacks.MergeStatusOnError;
 import com.cdancy.bitbucket.rest.filters.BitbucketAuthentication;
-import org.jclouds.rest.annotations.SelectJson;
 import org.jclouds.rest.binders.BindToJsonPayload;
 
 @Produces(MediaType.APPLICATION_JSON)
 @RequestFilters(BitbucketAuthentication.class)
 @Path("/rest/api/{jclouds.api-version}/projects")
 public interface PullRequestApi {
+
+    @Named("pull-request:get-all")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/{project}/repos/{repo}/pull-requests")
+    @Fallback(PullRequestOnError.class)
+    @GET
+    PullRequestPage get(@PathParam("project") String project,
+                        @PathParam("repo") String repo,
+                        @Nullable @QueryParam("limit") Integer limit,
+                        @Nullable @QueryParam("start") Integer start);
 
     @Named("pull-request:get")
     @Consumes(MediaType.APPLICATION_JSON)

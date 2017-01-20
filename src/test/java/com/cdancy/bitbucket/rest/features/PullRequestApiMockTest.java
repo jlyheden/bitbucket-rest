@@ -21,17 +21,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Map;
 
+import com.cdancy.bitbucket.rest.domain.pullrequest.*;
 import org.testng.annotations.Test;
 
 import com.cdancy.bitbucket.rest.BitbucketApi;
 import com.cdancy.bitbucket.rest.BitbucketApiMetadata;
-import com.cdancy.bitbucket.rest.domain.pullrequest.MergeStatus;
-import com.cdancy.bitbucket.rest.domain.pullrequest.MinimalRepository;
-import com.cdancy.bitbucket.rest.domain.pullrequest.ChangePage;
-import com.cdancy.bitbucket.rest.domain.pullrequest.CommitPage;
-import com.cdancy.bitbucket.rest.domain.pullrequest.ProjectKey;
-import com.cdancy.bitbucket.rest.domain.pullrequest.PullRequest;
-import com.cdancy.bitbucket.rest.domain.pullrequest.Reference;
 import com.cdancy.bitbucket.rest.internal.BaseBitbucketMockTest;
 import com.cdancy.bitbucket.rest.options.CreatePullRequest;
 import com.google.common.collect.ImmutableMap;
@@ -285,4 +279,27 @@ public class PullRequestApiMockTest extends BaseBitbucketMockTest {
             server.shutdown();
         }
     }
+
+    public void testGetPullRequests() throws Exception {
+        MockWebServer server = mockEtcdJavaWebServer();
+        server.enqueue(new MockResponse().setBody(payloadFromResource("/pull-requests.json"))
+            .setResponseCode(200));
+        BitbucketApi baseApi = api(server.getUrl("/"));
+        PullRequestApi api = baseApi.pullRequestApi();
+
+        try {
+            PullRequestPage requests = api.get(project, repo, null, null);
+            assertThat(requests).isNotNull();
+            assertThat(requests.values()).isNotEmpty();
+            assertThat(requests.values().get(0).description().equals("Some description"));
+
+            assertSent(server, "GET", "/rest/api/" + BitbucketApiMetadata.API_VERSION
+                    + "/projects/PRJ/repos/my-repo/pull-requests");
+        } finally {
+            baseApi.close();
+            server.shutdown();
+        }
+
+    }
+
 }
